@@ -8,9 +8,11 @@ export function cn(...inputs: ClassValue[]) {
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem('authToken');
   
-  const headers = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers instanceof Headers
+      ? Object.fromEntries(options.headers.entries())
+      : options.headers as Record<string, string> || {}),
   };
 
   if (token) {

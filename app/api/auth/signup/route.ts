@@ -24,15 +24,36 @@ export async function POST(req: Request) {
 
         const token = generateToken(user._id);
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             message: 'User created successfully',
             token
         }, { status: 201 });
 
-    } catch (error: any) {
-        console.error('Signup error:', error);
+        response.cookies.set({
+            name: 'authToken',
+            value: token,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 
+        });
+
+        return response;
+
+    } catch (error: Error | unknown) {
+        let errorMessage = 'Error creating user';
+        
+        if (error && typeof error === 'object' && 'errors' in error) {
+            const validationError = error as { errors: { [key: string]: { message: string } } };
+            const errorKeys = Object.keys(validationError.errors);
+            if (errorKeys.length > 0) {
+                console.error('Signup error:', JSON.stringify(validationError.errors[errorKeys[0]].message));
+                errorMessage = validationError.errors[errorKeys[0]].message;
+            }
+        }
+        
         return NextResponse.json(
-            { message: 'Error creating user' },
+            { message: errorMessage },
             { status: 500 }
         );
     }
