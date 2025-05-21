@@ -9,7 +9,6 @@ export async function POST(req: Request) {
         
         const { email, password } = await req.json();
 
-        // Find user by email
         const user = await User.findOne({ email });
         if (!user) {
             return NextResponse.json(
@@ -18,7 +17,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Verify password
         const isValidPassword = await user.comparePassword(password);
         if (!isValidPassword) {
             return NextResponse.json(
@@ -27,7 +25,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Generate JWT token
         const token = generateToken(user._id);
 
         return NextResponse.json({

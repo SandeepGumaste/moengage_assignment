@@ -23,7 +23,6 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   });
 
   if (response.status === 401) {
-    // Handle unauthorized access
     localStorage.removeItem('authToken');
     window.location.href = '/';
   }

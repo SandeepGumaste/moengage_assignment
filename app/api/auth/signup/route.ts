@@ -9,7 +9,6 @@ export async function POST(req: Request) {
         
         const { email, password } = await req.json();
 
-        // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return NextResponse.json(
@@ -18,13 +17,11 @@ export async function POST(req: Request) {
             );
         }
 
-        // Create new user
         const user = await User.create({
             email,
             password
         });
 
-        // Generate JWT token
         const token = generateToken(user._id);
 
         return NextResponse.json({
