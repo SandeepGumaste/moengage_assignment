@@ -75,3 +75,44 @@ export async function POST(req: Request) {
         );
     }
 }
+
+export async function DELETE(req: Request) {
+    try {
+        const authResult = await verifyAuth(req);
+        
+        if (!authResult.isValid || !authResult.userId) {
+            return NextResponse.json(
+                { message: authResult.error || 'Authentication failed' },
+                { status: 401 }
+            );
+        }
+
+        await connectDB();
+        const url = new URL(req.url);
+        const id = url.searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json(
+                { message: 'List ID is required' },
+                { status: 400 }
+            );
+        }
+
+        const deletedList = await SavedList.findByIdAndDelete(id);
+
+        if (!deletedList) {
+            return NextResponse.json(
+                { message: 'List not found' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({ message: 'List deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting list:', error);
+        return NextResponse.json(
+            { message: 'Failed to delete list' },
+            { status: 500 }
+        );
+    }
+}

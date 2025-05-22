@@ -35,12 +35,11 @@ const Navbar = ({ hide }: Props) => {
               variant={pathname === "/search" ? "default" : "outline"}
             >
               <Link href="/search">Search</Link>
-            </Button>
-            <Button
+            </Button>            <Button
               asChild
-              variant={pathname === "/list" ? "default" : "outline"}
+              variant={pathname === "/lists" ? "default" : "outline"}
             >
-              <Link href="/list">List</Link>
+              <Link href="/lists">Lists</Link>
             </Button>
             {user && (
               <>
