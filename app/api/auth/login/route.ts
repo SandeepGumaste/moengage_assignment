@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/lib/models/user';
-import { generateToken } from '@/lib/auth';
+import { generateToken, setAuthCookie } from '@/lib/auth';
 
 export async function POST(req: Request) {
     try {
@@ -25,25 +25,17 @@ export async function POST(req: Request) {
             );
         }
 
-        const token = generateToken(user._id);
-
+        const token = await generateToken(user._id.toString());
         const response = NextResponse.json({
             message: 'Login successful',
-            token
+            token,
+            userId: user._id.toString()
         });
 
-        response.cookies.set({
-            name: 'authToken',
-            value: token,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 
-        });
-
+        setAuthCookie(token, response);
         return response;
 
-    } catch (error: Error | unknown) {
+    } catch (error) {
         console.error('Login error:', error);
         return NextResponse.json(
             { message: 'Error during login' },

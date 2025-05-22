@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useUser } from "@/contexts/UserContext";
 
 type FormMode = 'login' | 'signup';
 
@@ -17,6 +18,7 @@ interface FormField {
 }
 
 export default function AuthForm() {
+    const { setUser } = useUser();
     const [mode, setMode] = useState<FormMode>('login');
     const [formData, setFormData] = useState({
         email: '',
@@ -71,11 +73,16 @@ export default function AuthForm() {
                     email: formData.email,
                     password: formData.password
                 }),
-            });            const data = await res.json();
+            });            
+            const data = await res.json();
             if (res.ok) {
-                // Store the JWT token
                 localStorage.setItem('authToken', data.token);
-                // Set the authorization header for future requests
+                const userData = {
+                    id: data.userId,
+                    email: formData.email
+                };
+                localStorage.setItem('userData', JSON.stringify(userData));
+                setUser(userData);
                 window.location.href = "/search";
             } else {
                 setError(data.message || `${mode === 'login' ? 'Login' : 'Signup'} failed`);

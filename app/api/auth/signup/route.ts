@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/lib/models/user';
-import { generateToken } from '@/lib/auth';
+import { generateToken, setAuthCookie } from '@/lib/auth';
 
 export async function POST(req: Request) {
     try {
@@ -22,27 +22,18 @@ export async function POST(req: Request) {
             password
         });
 
-        const token = generateToken(user._id);
-
+        const token = await generateToken(user._id.toString());
         const response = NextResponse.json({
             message: 'User created successfully',
-            token
+            token,
+            userId: user._id.toString()
         }, { status: 201 });
 
-        response.cookies.set({
-            name: 'authToken',
-            value: token,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 
-        });
-
+        setAuthCookie(token, response);
         return response;
 
-    } catch (error: Error | unknown) {
+    } catch (error) {
         let errorMessage = 'Error creating user';
-        
         if (error && typeof error === 'object' && 'errors' in error) {
             const validationError = error as { errors: { [key: string]: { message: string } } };
             const errorKeys = Object.keys(validationError.errors);
