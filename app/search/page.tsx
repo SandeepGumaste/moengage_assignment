@@ -7,7 +7,7 @@ import { SearchProvider } from '@/contexts/SearchContext';
 const SearchPage = () => {
   return (
     <SearchProvider>
-      <div className="space-y-6">
+      <div className="space-y-6 flex flex-col items-center justify-center">
         <SearchBar />
         <SearchResultView />
       </div>

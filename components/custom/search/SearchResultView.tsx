@@ -16,7 +16,7 @@ const SearchResultView = () => {
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3  gap-8 p-4 max-w-screen-xl ">
             {results.map((result, index) => (
                 <Card
                     key={index}
@@ -28,14 +28,14 @@ const SearchResultView = () => {
                     <CardHeader className='pb-0'>
                         <CardTitle> Code: {result.code}</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="relative w-full h-48 aspect-w-16 aspect-h-9">
+                    <CardContent className="p-0 min-w-56 md:min-w-64 lg:min-w-80">
+                        <div className="relative w-full h-48 md:h-64 lg:h-72">
                             <Image
                                 src={result.url}
                                 alt={`Status code ${result.code}`}
                                 fill
                                 className="object-contain"
-                                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                sizes="100vw"
                             />
                         </div>
                     </CardContent>
