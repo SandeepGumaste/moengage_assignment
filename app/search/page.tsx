@@ -1,13 +1,13 @@
+'use client';
+
 import SearchBar from '@/components/custom/search/SearchBar'
-import React from 'react'
+import { SearchProvider } from '@/contexts/SearchContext';
 
-type Props = {}
-
-const SearchPage = (props: Props) => {
+const SearchPage = () => {
   return (
-    <>
-      <SearchBar/>
-    </>
+    <SearchProvider>
+      <SearchBar />
+    </SearchProvider>
   )
 }
 

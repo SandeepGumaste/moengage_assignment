@@ -58,7 +58,7 @@ function matchesFilter(code: string, filter: string): boolean {
 
 export function getFilteredResponseCodeUrls(
   filter: string,
-): string[] {
+): {code:string, url:string}[] {
   const result = [];
   const responseCodeMap: ResponseCodeMap = responseCodes
   const allResponseCodes = getAllResponseCodes(responseCodeMap);
@@ -69,7 +69,7 @@ export function getFilteredResponseCodeUrls(
   for (const code of allResponseCodes) {
     // console.log(code,"code");
     if (matchesFilter(code, filter)) {
-      result.push(`https://http.dog/${code}.jpg`);
+      result.push({code, url: `https://http.dog/${code}.jpg`});
     }
   }
   // console.log(result, "Result");
