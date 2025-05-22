@@ -7,9 +7,11 @@ import { Search, Save } from "lucide-react";
 import { useSearch } from "@/contexts/SearchContext";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
 
 const SearchBar = () => {
   const { query, setQuery, results, setResults } = useSearch();
+  const { user } = useUser();
   const router = useRouter();
   const debouncedQuery = useDebounce(query, 1000);
   const [isSaving, setIsSaving] = useState(false);
@@ -46,13 +48,12 @@ const SearchBar = () => {
       const cleanToken = token.replace(/^Bearer\s+/i, '');
 
       const requestData = {
-        name: `Status Codes ${results.map(r => r.code).join(', ')}`,
+        name: query,
+        email: user?.email || '',
         responseCodes: results.map(r => r.code),
         imageUrls: results.map(r => r.url)
       };
       
-      // console.log('Saving list with data:', requestData);
-
       const saveResponse = await fetch("/api/saved-lists", {
         method: "POST",
         headers: {
@@ -62,15 +63,16 @@ const SearchBar = () => {
         body: JSON.stringify(requestData)
       });
 
-      // console.log('Save response status:', saveResponse.status);
       const data = await saveResponse.json();
-      // console.log('Save response data:', data);
 
       if (!saveResponse.ok) {
         if (saveResponse.status === 401) {
           localStorage.removeItem("authToken");
           router.push("/");
           return;
+        }
+        if (saveResponse.status === 409) {
+          throw new Error("A list with this name already exists.");
         }
         throw new Error(data.message || "Failed to save list");
       }

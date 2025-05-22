@@ -2,6 +2,7 @@ import mongoose, { Document, Model } from "mongoose";
 
 export interface ISavedList extends Document {
   name: string;
+  email: string;
   creationDate: Date;
   responseCodes: string[];
   imageUrls: string[];
@@ -9,6 +10,12 @@ export interface ISavedList extends Document {
 
 const savedListSchema = new mongoose.Schema({
   name: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+  },
+  email: {
     type: String,
     required: true,
   },

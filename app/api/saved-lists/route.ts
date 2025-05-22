@@ -30,7 +30,6 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const authResult = await verifyAuth(req);
-        // console.log('Auth result:', authResult);
         
         if (!authResult.isValid || !authResult.userId) {
             return NextResponse.json(
@@ -41,19 +40,26 @@ export async function POST(req: Request) {
 
         await connectDB();
         const data = await req.json();
-        // console.log('Received data:', data);
         
-        if (!data || !Array.isArray(data.responseCodes) || !Array.isArray(data.imageUrls)) {
-            // console.log('Invalid data structure:', data);
+        if (!data || !Array.isArray(data.responseCodes) || !Array.isArray(data.imageUrls) || !data.name) {
             return NextResponse.json(
                 { message: 'Invalid request body' },
                 { status: 400 }
             );
         }
 
-        // console.log('Creating list with data:', data);
+        // Check if a list with the same name already exists
+        const existingList = await SavedList.findOne({ name: data.name });
+        if (existingList) {
+            return NextResponse.json(
+                { message: 'A list with this name already exists' },
+                { status: 409 }
+            );
+        }
+
         const savedList = await SavedList.create({
-            name: data.name || `Saved List ${new Date().toLocaleDateString()}`,
+            name: data.name,
+            email: data.email || 'user@example.com', // Default email, should be replaced with actual user email
             creationDate: new Date(),
             responseCodes: data.responseCodes,
             imageUrls: data.imageUrls
