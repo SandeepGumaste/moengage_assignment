@@ -8,7 +8,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ valid: false }, { status: 401 });
         }
         return NextResponse.json({ valid: true });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ valid: false }, { status: 401 });
     }
 }
