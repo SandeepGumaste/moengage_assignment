@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/contexts/UserContext';
 import {
   Table,
   TableBody,
@@ -27,6 +28,7 @@ export default function SavedLists() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const router = useRouter();
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchLists = async () => {
@@ -50,19 +52,16 @@ export default function SavedLists() {
             return;
           }
           throw new Error('Failed to fetch lists');
-        }
-
-        const data = await response.json();
-        setLists(data);
+        }        const data = await response.json();
+        // Filter lists to only show the current user's lists
+        setLists(data.filter((list: SavedList) => list.email === user?.email));
       } catch (error) {
         console.error('Error fetching lists:', error);
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchLists();
-  }, [router]);
+    };    fetchLists();
+  }, [router, user?.email]);
 
   const handleView = (list: SavedList) => {
     router.push(`/search?q=${list.responseCodes[0]}`);
@@ -77,15 +76,12 @@ export default function SavedLists() {
       return;
     }
 
-    try {
-      setDeleting(list._id);
+    try {      setDeleting(list.name);
       const token = localStorage.getItem('authToken');
       if (!token) {
         router.push('/');
         return;
-      }
-
-      const response = await fetch(`/api/saved-lists?id=${list._id}`, {
+      }      const response = await fetch(`/api/saved-lists?name=${encodeURIComponent(list.name)}&email=${encodeURIComponent(list.email)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token.replace(/^Bearer\s+/i, '')}`
@@ -99,10 +95,8 @@ export default function SavedLists() {
           return;
         }
         throw new Error('Failed to delete list');
-      }
-
-      // Update local state to remove the deleted list
-      setLists(lists => lists.filter(l => l._id !== list._id));
+      }      // Update local state to remove the deleted list
+      setLists(lists => lists.filter(l => !(l.name === list.name && l.email === list.email)));
     } catch (error) {
       console.error('Error deleting list:', error);
       alert('Failed to delete list');
@@ -171,10 +165,9 @@ export default function SavedLists() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDelete(list)}
-                          disabled={deleting === list._id}
+                          onClick={() => handleDelete(list)}                          disabled={deleting === list.name}
                         >
-                          {deleting === list._id ? 'Deleting...' : 'Delete'}
+                          {deleting === list.name ? 'Deleting...' : 'Delete'}
                         </Button>
                       </div>
                     </TableCell>

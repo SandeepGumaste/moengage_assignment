@@ -87,18 +87,18 @@ export async function DELETE(req: Request) {
             );
         }
 
-        await connectDB();
-        const url = new URL(req.url);
-        const id = url.searchParams.get('id');
+        await connectDB();        const url = new URL(req.url);
+        const name = url.searchParams.get('name');
+        const email = url.searchParams.get('email');
 
-        if (!id) {
+        if (!name || !email) {
             return NextResponse.json(
-                { message: 'List ID is required' },
+                { message: 'Both list name and email are required' },
                 { status: 400 }
             );
         }
 
-        const deletedList = await SavedList.findByIdAndDelete(id);
+        const deletedList = await SavedList.findOneAndDelete({ name, email });
 
         if (!deletedList) {
             return NextResponse.json(
