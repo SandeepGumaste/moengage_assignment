@@ -6,6 +6,8 @@ import { verifyAuth } from '@/lib/auth';
 export async function GET(req: Request) {
     try {
         const authResult = await verifyAuth(req);
+        // console.log('Auth result:', authResult);
+        
         if (!authResult.isValid || !authResult.userId) {
             return NextResponse.json(
                 { message: authResult.error || 'Authentication failed' },
@@ -17,7 +19,7 @@ export async function GET(req: Request) {
         const savedLists = await SavedList.find().sort({ creationDate: -1 });
         return NextResponse.json(savedLists);
     } catch (error) {
-        console.error('Error fetching saved lists:', error);
+        console.error('Error fetching saved lists:', error); 
         return NextResponse.json(
             { message: 'Failed to fetch saved lists' },
             { status: 500 }
@@ -28,7 +30,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const authResult = await verifyAuth(req);
-        console.log('Auth result:', authResult);
+        // console.log('Auth result:', authResult);
         
         if (!authResult.isValid || !authResult.userId) {
             return NextResponse.json(
@@ -39,30 +41,28 @@ export async function POST(req: Request) {
 
         await connectDB();
         const data = await req.json();
-        console.log('Received data:', data);
+        // console.log('Received data:', data);
         
         if (!data || !Array.isArray(data.responseCodes) || !Array.isArray(data.imageUrls)) {
-            console.log('Invalid data structure:', data);
+            // console.log('Invalid data structure:', data);
             return NextResponse.json(
                 { message: 'Invalid request body' },
                 { status: 400 }
             );
         }
 
-        const listData = {
+        // console.log('Creating list with data:', data);
+        const savedList = await SavedList.create({
             name: data.name || `Saved List ${new Date().toLocaleDateString()}`,
             creationDate: new Date(),
             responseCodes: data.responseCodes,
             imageUrls: data.imageUrls
-        };
-        
-        console.log('Creating list with data:', listData);
-        const savedList = await SavedList.create(listData);
-        console.log('Created list:', savedList);
+        });
+        // console.log('Created list:', savedList);
 
         return NextResponse.json(savedList);
     } catch (error) {
-        console.error('Error creating saved list:', error);
+        console.error('Error creating saved list:', error); 
         return NextResponse.json(
             { message: 'Failed to create saved list' },
             { status: 500 }

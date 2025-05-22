@@ -43,7 +43,6 @@ const SearchBar = () => {
         return;
       }
 
-      // Make sure we're using a clean token without Bearer prefix when sending
       const cleanToken = token.replace(/^Bearer\s+/i, '');
 
       const requestData = {
@@ -52,7 +51,7 @@ const SearchBar = () => {
         imageUrls: results.map(r => r.url)
       };
       
-      console.log('Saving list with data:', requestData);
+      // console.log('Saving list with data:', requestData);
 
       const saveResponse = await fetch("/api/saved-lists", {
         method: "POST",
@@ -63,9 +62,9 @@ const SearchBar = () => {
         body: JSON.stringify(requestData)
       });
 
-      console.log('Save response status:', saveResponse.status);
+      // console.log('Save response status:', saveResponse.status);
       const data = await saveResponse.json();
-      console.log('Save response data:', data);
+      // console.log('Save response data:', data);
 
       if (!saveResponse.ok) {
         if (saveResponse.status === 401) {

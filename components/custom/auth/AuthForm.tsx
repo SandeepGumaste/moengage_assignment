@@ -79,7 +79,6 @@ export default function AuthForm() {
             });            
             const data = await res.json();
             if (res.ok) {
-                // Make sure we store the token with Bearer prefix
                 const token = data.token.startsWith('Bearer ') ? data.token : `Bearer ${data.token}`;
                 localStorage.setItem('authToken', token);
                 
