@@ -48,7 +48,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Check if a list with the same name already exists
         const existingList = await SavedList.findOne({ name: data.name });
         if (existingList) {
             return NextResponse.json(
@@ -59,7 +58,7 @@ export async function POST(req: Request) {
 
         const savedList = await SavedList.create({
             name: data.name,
-            email: data.email || 'user@example.com', // Default email, should be replaced with actual user email
+            email: data.email || 'user@example.com',
             creationDate: new Date(),
             responseCodes: data.responseCodes,
             imageUrls: data.imageUrls
@@ -71,6 +70,53 @@ export async function POST(req: Request) {
         console.error('Error creating saved list:', error); 
         return NextResponse.json(
             { message: 'Failed to create saved list' },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(req: Request) {
+    try {
+        const authResult = await verifyAuth(req);
+        
+        if (!authResult.isValid || !authResult.userId) {
+            return NextResponse.json(
+                { message: authResult.error || 'Authentication failed' },
+                { status: 401 }
+            );
+        }
+        
+        await connectDB();
+        const data = await req.json();
+        
+        if (!data.listId || !Array.isArray(data.responseCodes) || !Array.isArray(data.imageUrls)) {
+            return NextResponse.json(
+                { message: 'Invalid request body: listId, responseCodes, and imageUrls are required' },
+                { status: 400 }
+            );
+        }
+
+        const updatedList = await SavedList.findByIdAndUpdate(
+            data.listId,
+            {
+                responseCodes: data.responseCodes,
+                imageUrls: data.imageUrls
+            },
+            { new: true }
+        );
+
+        if (!updatedList) {
+            return NextResponse.json(
+                { message: 'List not found' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json(updatedList);
+    } catch (error) {
+        console.error('Error updating list:', error);
+        return NextResponse.json(
+            { message: 'Failed to update list' },
             { status: 500 }
         );
     }
