@@ -1,13 +1,18 @@
-import React from 'react'
+'use client';
 
-export default function WelcomePageLayout({
+import Navbar from '@/components/custom/navbar/Navbar';
+
+export default function SearchLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            {children}
+        <div className="min-h-screen bg-gray-50">
+            <Navbar hide={false} />
+            <main className="pt-20 px-4">
+                {children}
+            </main>
         </div>
     );
 }

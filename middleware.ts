@@ -10,8 +10,8 @@ export async function middleware(request: NextRequest) {
     if (protectedPaths.some(prefix => path.startsWith(prefix))) {
         const token = request.cookies.get('authToken')?.value || 
                      request.headers.get('Authorization')?.replace('Bearer ', '')
-        console.log('Token:', token)
-        console.log('Auth:', request.headers.get('Authorization'))
+        // console.log('Token:', token)
+        // console.log('Auth:', request.headers.get('Authorization'))
 
         if (!token) {
             return NextResponse.json(

@@ -1,22 +1,25 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import responseCodes from "@/lib/responseCodes.json";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
+type ResponseCodeMap = Record<string, number[]>;
+
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('authToken');
-  
+  const token = localStorage.getItem("authToken");
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(options.headers instanceof Headers
       ? Object.fromEntries(options.headers.entries())
-      : options.headers as Record<string, string> || {}),
+      : (options.headers as Record<string, string>) || {}),
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const response = await fetch(url, {
@@ -25,9 +28,51 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   });
 
   if (response.status === 401) {
-    localStorage.removeItem('authToken');
-    window.location.href = '/';
+    localStorage.removeItem("authToken");
+    window.location.href = "/";
   }
 
   return response;
+}
+
+export function getAllResponseCodes(groups: Record<string, number[]>): string[] {
+  return Object.values(groups)
+    .flat()
+    .map(code => code.toString())
+}
+
+function matchesFilter(code: string, filter: string): boolean {
+  // console.log(code, filter, "code and filter");
+  if (filter.endsWith("xx")) {
+    const prefix = filter[0];
+    return code.startsWith(prefix);
+  }
+
+  if (filter.endsWith("x")) {
+    const prefix = filter.slice(0, -1);
+    return code.startsWith(prefix);
+  }
+
+  return code === filter;
+}
+
+export function getFilteredResponseCodeUrls(
+  filter: string,
+): string[] {
+  const result = [];
+  const responseCodeMap: ResponseCodeMap = responseCodes
+  const allResponseCodes = getAllResponseCodes(responseCodeMap);
+  // console.log(allResponseCodes, "allResponseCodes");
+  
+
+
+  for (const code of allResponseCodes) {
+    // console.log(code,"code");
+    if (matchesFilter(code, filter)) {
+      result.push(`https://http.dog/${code}.jpg`);
+    }
+  }
+  // console.log(result, "Result");
+
+  return result;
 }
