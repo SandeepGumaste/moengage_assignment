@@ -1,16 +1,16 @@
 "use client";
-import { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { cn, getFilteredResponseCodeUrls } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { useSearch } from "@/contexts/SearchContext";
 
-export default function SearchBar() {
+const SearchBar = () => {
   const { query, setQuery, setResults } = useSearch();
   const debouncedQuery = useDebounce(query, 1000);
 
-  useEffect(() => {
+  const handleSearch = useCallback(() => {
     if (debouncedQuery) {
       const filteredUrls = getFilteredResponseCodeUrls(debouncedQuery);
       setResults(filteredUrls);
@@ -19,9 +19,16 @@ export default function SearchBar() {
     }
   }, [debouncedQuery, setResults]);
 
-  const handleChange = (value: string) => {
-    setQuery(value);
-  };
+  useEffect(() => {
+    handleSearch();
+  }, [handleSearch]);
+
+  const handleChange = useCallback(
+    (value: string) => {
+      setQuery(value);
+    },
+    [setQuery]
+  );
 
   return (
     <div className="relative w-full max-w-xl mx-auto">
@@ -41,4 +48,6 @@ export default function SearchBar() {
       />
     </div>
   );
-}
+};
+
+export default React.memo(SearchBar);
