@@ -26,12 +26,11 @@ export async function generateToken(userId: string): Promise<string> {
     return token;
 }
 
-export async function authenticate(req: Request): Promise<AuthPayload | NextResponse> {
+export async function verifyAuth(req: Request): Promise<{ isValid: boolean; userId?: string; error?: string }> {
     try {
         let token = req.headers.get('Authorization')?.replace('Bearer ', '');
         
         if (!token) {
-            // Try to get token from cookie in the request
             const cookieHeader = req.headers.get('cookie');
             if (cookieHeader) {
                 const cookies = Object.fromEntries(
@@ -45,22 +44,8 @@ export async function authenticate(req: Request): Promise<AuthPayload | NextResp
         }
 
         if (!token) {
-            return new NextResponse(
-                JSON.stringify({ message: 'Authentication required' }),
-                { status: 401 }
-            );
+            return { isValid: false, error: 'No token provided' };
         }
-
-        const session = await ActiveSession.findOne({ token });
-        if (!session) {
-            return new NextResponse(
-                JSON.stringify({ message: 'Session expired or invalid' }),
-                { status: 401 }
-            );
-        }
-
-        session.lastActive = new Date();
-        await session.save();
 
         if (!process.env.JWT_SECRET) {
             throw new Error('JWT_SECRET is not defined');
@@ -70,17 +55,37 @@ export async function authenticate(req: Request): Promise<AuthPayload | NextResp
         const { payload } = await jose.jwtVerify(token, secret);
         
         if (typeof payload.userId !== 'string') {
-            throw new Error('Invalid token payload');
+            return { isValid: false, error: 'Invalid token payload' };
         }
 
-        return { userId: payload.userId, exp: payload.exp } as AuthPayload;
+        const session = await ActiveSession.findOneAndUpdate(
+            { token },
+            { $set: { lastActive: new Date() } },
+            { new: true }
+        );
+
+        if (!session) {
+            return { isValid: false, error: 'Session expired or invalid' };
+        }
+
+        return { isValid: true, userId: payload.userId };
     } catch (error) {
         console.error('Authentication error:', error);
+        return { isValid: false, error: 'Invalid token' };
+    }
+}
+
+export async function authenticate(req: Request): Promise<AuthPayload | NextResponse> {
+    const authResult = await verifyAuth(req);
+
+    if (!authResult.isValid) {
         return new NextResponse(
-            JSON.stringify({ message: 'Invalid token' }),
+            JSON.stringify({ message: authResult.error }),
             { status: 401 }
         );
     }
+
+    return { userId: authResult.userId!, exp: undefined } as AuthPayload;
 }
 
 export function setAuthCookie(token: string, response: NextResponse): void {
@@ -88,6 +93,6 @@ export function setAuthCookie(token: string, response: NextResponse): void {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 // 7 days
+        maxAge: 7 * 24 * 60 * 60 
     });
 }

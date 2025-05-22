@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { authenticate, AuthPayload } from './lib/auth';
+import { verifyAuth } from './lib/auth';
 
 export async function middleware(request: NextRequest) {
     const token = request.cookies.get('authToken')?.value || 
@@ -13,13 +13,13 @@ export async function middleware(request: NextRequest) {
         })
     });
 
-    const authResult = await authenticate(requestWithToken);
+    const authResult = await verifyAuth(requestWithToken);
     
-    if ('status' in authResult && authResult.status === 401) {
+    if (!authResult.isValid) {
         // For API routes, return JSON response
         if (request.nextUrl.pathname.startsWith('/api/')) {
             return NextResponse.json(
-                { message: 'Authentication required' },
+                { message: authResult.error },
                 { status: 401 }
             );
         }
@@ -27,30 +27,15 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 
-    const payload = authResult as AuthPayload;
+    // Add userId to headers for downstream use
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('user-id', payload.userId);
+    requestHeaders.set('user-id', authResult.userId!);
     
-    const response = NextResponse.next({
+    return NextResponse.next({
         request: {
             headers: requestHeaders
         }
     });
-
-    // Set or refresh the auth cookie if needed
-    if (!request.cookies.has('authToken') && token) {
-        response.cookies.set({
-            name: 'authToken',
-            value: token,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 24 * 60 * 60 // 24 hours
-        });
-    }
-
-    return response;
 }
 
 export const config = {
