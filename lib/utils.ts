@@ -10,26 +10,30 @@ type ResponseCodeMap = Record<string, number[]>;
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem("authToken");
+  
+  if (!token) {
+    window.location.href = "/";
+    return Promise.reject(new Error("No authentication token found"));
+  }
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`,
     ...(options.headers instanceof Headers
       ? Object.fromEntries(options.headers.entries())
       : (options.headers as Record<string, string>) || {}),
   };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const response = await fetch(url, {
     ...options,
+    credentials: 'include',
     headers,
   });
 
   if (response.status === 401) {
     localStorage.removeItem("authToken");
     window.location.href = "/";
+    return Promise.reject(new Error("Authentication failed"));
   }
 
   return response;

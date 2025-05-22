@@ -68,7 +68,10 @@ export default function AuthForm() {
         try {
             const res = await fetch(`/api/auth/${mode}`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json"
+                },
+                credentials: 'include',
                 body: JSON.stringify({
                     email: formData.email,
                     password: formData.password
@@ -76,7 +79,10 @@ export default function AuthForm() {
             });            
             const data = await res.json();
             if (res.ok) {
-                localStorage.setItem('authToken', data.token);
+                // Make sure we store the token with Bearer prefix
+                const token = data.token.startsWith('Bearer ') ? data.token : `Bearer ${data.token}`;
+                localStorage.setItem('authToken', token);
+                
                 const userData = {
                     id: data.userId,
                     email: formData.email
@@ -88,7 +94,7 @@ export default function AuthForm() {
                 setError(data.message || `${mode === 'login' ? 'Login' : 'Signup'} failed`);
             }
         } catch (err) {
-            console.log(`Error while login/signup: ${err}`);
+            console.error(`Error during ${mode}:`, err);
             setError("An error occurred. Please try again.");
         } finally {
             setLoading(false);

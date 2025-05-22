@@ -1,43 +1,34 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyAuth } from './lib/auth';
 
 export async function middleware(request: NextRequest) {
-    const token = request.cookies.get('authToken')?.value || 
-                 request.headers.get('Authorization')?.replace('Bearer ', '');
-
-    const requestWithToken = new Request(request.url, {
-        headers: new Headers({
-            ...Object.fromEntries(request.headers.entries()),
-            'Authorization': `Bearer ${token || ''}`
-        })
-    });
-
-    const authResult = await verifyAuth(requestWithToken);
+    let token = request.cookies.get('authToken')?.value || 
+                request.headers.get('Authorization');
     
-    if (!authResult.isValid) {
-        if (request.nextUrl.pathname.startsWith('/api/')) {
-            return NextResponse.json(
-                { message: authResult.error },
-                { status: 401 }
-            );
-        }
+    // Clean up token format
+    if (token) {
+        // Remove 'Bearer ' prefix if present
+        token = token.replace(/^Bearer\s+/i, '');
+        
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set('Authorization', `Bearer ${token}`);
+        
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders
+            }
+        });
+    }
+
+    if (request.nextUrl.pathname.startsWith('/search/')) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('user-id', authResult.userId!);
-    
-    return NextResponse.next({
-        request: {
-            headers: requestHeaders
-        }
-    });
+    return NextResponse.next();
 }
 
 export const config = {
     matcher: [
-        '/api/saved-lists/:path*',
         '/api/protected/:path*',
         '/search/:path*'
     ]

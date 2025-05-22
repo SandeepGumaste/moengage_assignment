@@ -28,7 +28,10 @@ export async function generateToken(userId: string): Promise<string> {
 
 export async function verifyAuth(req: Request): Promise<{ isValid: boolean; userId?: string; error?: string }> {
     try {
-        let token = req.headers.get('Authorization')?.replace('Bearer ', '');
+        let token = req.headers.get('Authorization') || '';
+        
+        // Remove 'Bearer ' prefix if present
+        token = token.replace(/^Bearer\s+/i, '');
         
         if (!token) {
             const cookieHeader = req.headers.get('cookie');
@@ -39,7 +42,7 @@ export async function verifyAuth(req: Request): Promise<{ isValid: boolean; user
                         return [key, v.join('=')];
                     })
                 );
-                token = cookies['authToken'];
+                token = cookies['authToken']?.replace(/^Bearer\s+/i, '') || '';
             }
         }
 
@@ -52,23 +55,30 @@ export async function verifyAuth(req: Request): Promise<{ isValid: boolean; user
         }
 
         const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-        const { payload } = await jose.jwtVerify(token, secret);
         
-        if (typeof payload.userId !== 'string') {
-            return { isValid: false, error: 'Invalid token payload' };
+        // Add error handling for malformed tokens
+        try {
+            const { payload } = await jose.jwtVerify(token, secret);
+            
+            if (typeof payload.userId !== 'string') {
+                return { isValid: false, error: 'Invalid token payload' };
+            }
+
+            const session = await ActiveSession.findOneAndUpdate(
+                { token: token }, // Store the clean token without Bearer
+                { $set: { lastActive: new Date() } },
+                { new: true }
+            );
+
+            if (!session) {
+                return { isValid: false, error: 'Session expired or invalid' };
+            }
+
+            return { isValid: true, userId: payload.userId };
+        } catch (jwtError) {
+            console.error('JWT Verification error:', jwtError);
+            return { isValid: false, error: 'Invalid token format' };
         }
-
-        const session = await ActiveSession.findOneAndUpdate(
-            { token },
-            { $set: { lastActive: new Date() } },
-            { new: true }
-        );
-
-        if (!session) {
-            return { isValid: false, error: 'Session expired or invalid' };
-        }
-
-        return { isValid: true, userId: payload.userId };
     } catch (error) {
         console.error('Authentication error:', error);
         return { isValid: false, error: 'Invalid token' };
