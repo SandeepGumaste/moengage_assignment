@@ -25,7 +25,6 @@ export async function POST(req: Request) {
 
         const token = await generateToken(user._id.toString());
 
-        // Create active session
         await ActiveSession.create({
             userId: user._id,
             token,

@@ -10,7 +10,7 @@ const SearchResultView = () => {
     const memoizedResults = useMemo(() => {
         return results.map(result => (
             <Card
-                key={result.code} // Using result.code as key instead of index for better performance
+                key={result.code} 
                 className={cn(
                     "relative group overflow-hidden",
                     "transition-transform duration-200 hover:scale-105"

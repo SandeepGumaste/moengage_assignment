@@ -22,7 +22,6 @@ export default function ProtectedRoute({
     }
   }, [isLoading, user, router, fallbackUrl]);
 
-  // Show loading spinner while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -31,11 +30,9 @@ export default function ProtectedRoute({
     );
   }
 
-  // If not authenticated, render nothing (will redirect)
   if (!user) {
     return null;
   }
 
-  // If authenticated, render children
   return <>{children}</>;
 }

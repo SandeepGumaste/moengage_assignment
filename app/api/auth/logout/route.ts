@@ -16,16 +16,14 @@ export async function POST(req: Request) {
             );
         }
 
-        // Remove the session from database
         await ActiveSession.deleteOne({ token });
 
-        // Create response that will clear the auth cookie
         const response = NextResponse.json({ message: 'Logged out successfully' });
         response.cookies.set('authToken', '', { 
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 0 // This will cause the cookie to be deleted
+            maxAge: 0 
         });
 
         return response;
