@@ -1,6 +1,7 @@
 import { NextApiRequest } from 'next';
 import { NextResponse } from 'next/server';
 import * as jose from 'jose';
+import ActiveSession from '@/lib/models/activeSession';
 
 export interface AuthPayload {
     userId: string;
@@ -8,23 +9,20 @@ export interface AuthPayload {
 }
 
 export interface AuthenticatedRequest extends NextApiRequest {
-    user?: AuthPayload;
+    auth?: AuthPayload;
 }
 
 export async function generateToken(userId: string): Promise<string> {
     if (!process.env.JWT_SECRET) {
-        throw new Error('JWT_SECRET is not defined in environment variables');
+        throw new Error('JWT_SECRET is not defined');
     }
-    
+
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
-    
     const token = await new jose.SignJWT({ userId })
         .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime(expiresIn)
-        .setIssuedAt()
+        .setExpirationTime('7d')
         .sign(secret);
-    
+
     return token;
 }
 
@@ -53,6 +51,17 @@ export async function authenticate(req: Request): Promise<AuthPayload | NextResp
             );
         }
 
+        const session = await ActiveSession.findOne({ token });
+        if (!session) {
+            return new NextResponse(
+                JSON.stringify({ message: 'Session expired or invalid' }),
+                { status: 401 }
+            );
+        }
+
+        session.lastActive = new Date();
+        await session.save();
+
         if (!process.env.JWT_SECRET) {
             throw new Error('JWT_SECRET is not defined');
         }
@@ -75,13 +84,10 @@ export async function authenticate(req: Request): Promise<AuthPayload | NextResp
 }
 
 export function setAuthCookie(token: string, response: NextResponse): void {
-    response.cookies.set({
-        name: 'authToken',
-        value: token,
+    response.cookies.set('authToken', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        path: '/',
-        maxAge: 24 * 60 * 60 // 24 hours
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 // 7 days
     });
 }

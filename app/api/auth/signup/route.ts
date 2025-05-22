@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/lib/models/user';
+import ActiveSession from '@/lib/models/activeSession';
 import { generateToken, setAuthCookie } from '@/lib/auth';
 
 export async function POST(req: Request) {
@@ -23,6 +24,14 @@ export async function POST(req: Request) {
         });
 
         const token = await generateToken(user._id.toString());
+
+        // Create active session
+        await ActiveSession.create({
+            userId: user._id,
+            token,
+            lastActive: new Date()
+        });
+
         const response = NextResponse.json({
             message: 'User created successfully',
             token,
