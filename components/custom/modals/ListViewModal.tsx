@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent,CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Trash2 } from 'lucide-react';
 import Image from 'next/image';
@@ -81,33 +81,33 @@ export default function ListViewModal({ list, onClose, onDeleteImage }: ListView
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {localImages.map((url, index) => (
-              <div key={index} className="relative group aspect-square">
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />
-                <div className="relative w-full h-full">
-                  <Image
-                    src={url}
-                    alt={`Status code ${localCodes[index]}`}
-                    fill
-                    className="object-cover rounded-lg"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-white font-bold mb-2">
-                    Status Code: {localCodes[index]}
-                  </p>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(index)}
-                    disabled={deletingIndex === index}
-                    className="flex items-center gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {deletingIndex === index ? 'Deleting...' : 'Delete'}
-                  </Button>
-                </div>
-              </div>
+              <Card key={index} className="relative overflow-hidden">
+                <CardHeader className="absolute top-0 flex justify-between items-center p-2 bg-gray-300/80 z-10 w-full">
+                  <p className="text-sm font-semibold">Status Code: {localCodes[index]}</p>
+
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="relative aspect-square">
+                    <Image
+                      src={url}
+                      alt={`Status code ${localCodes[index]}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDelete(index)}
+                      disabled={deletingIndex === index}
+                      className="absolute top-2 right-2 z-10 opacity-90 hover:opacity-100 cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </Card>
