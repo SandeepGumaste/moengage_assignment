@@ -2,7 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['http.dog'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'http.dog',
+      },
+    ],
   },
 };
 
